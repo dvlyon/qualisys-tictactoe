@@ -1,12 +1,8 @@
-// server/game.js
-let wins = { X: 0, O: 0 };
-let lastWinner = null;
-
-function initializeGame() {
+function initialiseGame(player) {
   return {
     board: Array(9).fill(null),
     winner: null,
-    status: 'Next player: X',
+    player,
   };
 }
 
@@ -25,8 +21,6 @@ function checkWinner(board) {
   for (let line of lines) {
     const [a, b, c] = line;
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      wins[board[a]]++;
-      lastWinner = board[a];
       return board[a];
     }
   }
@@ -34,9 +28,4 @@ function checkWinner(board) {
   return null;
 }
 
-function resetWins() {
-  wins = { X: 0, O: 0 };
-  lastWinner = null;
-}
-
-module.exports = { initializeGame, checkWinner, wins, resetWins, lastWinner };
+module.exports = { initialiseGame, checkWinner };

@@ -1,75 +1,91 @@
-// src/renderer/App.tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './App.css'; // Import the CSS file
+
+import './App.css';
+
+interface Game {
+  board: Array<string | null>;
+  winner: null | 'X' | 'O';
+  player: 'X' | 'O';
+}
+
+const initialGame: Game = {
+  board: Array(9).fill(null),
+  winner: null,
+  player: 'X',
+};
 
 const App = () => {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [status, setStatus] = useState('Next player: X');
-  const [player, setPlayer] = useState('X');
+  const [game, setGame] = useState(initialGame);
   const [wins, setWins] = useState({ X: 0, O: 0 });
   const [lastWinner, setLastWinner] = useState<string | null>(null);
 
+  const { board, winner, player } = game;
+
+  const isDraw = board.every((cell) => cell);
+
   useEffect(() => {
     const initialiseGame = async () => {
-      const gameRes = await axios.get('http://localhost:3001/api/game');
-      setBoard(gameRes.data.board);
-      setStatus(gameRes.data.status);
+      const gameRes = await axios.post<Game>('http://localhost:3001/api/game', {
+        player: 'X',
+      });
 
-      const winsRes = await axios.get('http://localhost:3001/api/wins');
-      setWins(winsRes.data);
-
-      const lastWinnerRes = await axios.get('http://localhost:3001/api/last-winner');
-      setLastWinner(lastWinnerRes.data.lastWinner);
-    }
+      setGame(gameRes.data);
+    };
 
     initialiseGame();
   }, []);
 
   const handleClick = async (index: number) => {
-    if (board[index] || status.includes('Winner')) return;
+    if (board[index] || winner) return;
 
-    const moveRes = await axios.post('http://localhost:3001/api/move', {
+    const moveRes = await axios.post<Game>('http://localhost:3001/api/move', {
+      game,
       index,
-      player,
     });
-    setBoard(moveRes.data.board);
-    setStatus(moveRes.data.status);
 
-    if (moveRes.data.winner) {
-      setLastWinner(player);
+    setGame(moveRes.data);
+
+    if (!!moveRes.data.winner) {
+      setWins((prev) => {
+        return {
+          X: prev.X + (moveRes.data.winner === 'X' ? 1 : 0),
+          O: prev.O + (moveRes.data.winner === 'O' ? 1 : 0),
+        };
+      });
+      setLastWinner(moveRes.data.winner);
     }
-
-    if (moveRes.data.board.every((cell: string | null) => cell !== null) && !moveRes.data.winner) {
-      setStatus('Draw! Click Reset Game to play again.');
-    } else {
-      setPlayer(player === 'X' ? 'O' : 'X');
-    }
-
-    const winsRes = await axios.get('http://localhost:3001/api/wins');
-    setWins(winsRes.data);
   };
 
   const handleReset = async () => {
-    const resetRes = await axios.post('http://localhost:3001/api/reset');
-    setBoard(resetRes.data.board);
-    setStatus(resetRes.data.status);
-    setPlayer(resetRes.data.nextPlayer);
+    const resetRes = await axios.post<Game>('http://localhost:3001/api/game', {
+      player: lastWinner === 'X' ? 'O' : 'X',
+    });
+
+    setGame(resetRes.data);
   };
 
   const handleResetWins = async () => {
-    await axios.post('http://localhost:3001/api/reset-wins');
-    const resetRes = await axios.post('http://localhost:3001/api/reset');
-    setBoard(resetRes.data.board);
-    setStatus(resetRes.data.status);
-    setPlayer('X');
-    setWins(resetRes.data.wins);
+    await handleReset();
+    setWins({ X: 0, O: 0 });
     setLastWinner(null);
   };
 
+  const renderStatus = winner
+    ? `Winner: ${winner}`
+    : isDraw
+    ? 'Draw!'
+    : `Next player: ${player}`;
+
   const renderSquare = (index: number) => (
     <button
-      className={`square ${board[index]} ${status.includes('Winner') || status.includes('Draw') ? 'disabled' : player === 'X' ? 'blue-hover' : 'red-hover'}`}
+      className={`square ${board[index]} ${
+        winner || isDraw
+          ? 'disabled'
+          : player === 'X'
+          ? 'blue-hover'
+          : 'red-hover'
+      }`}
       onClick={() => handleClick(index)}
       disabled={!!board[index]}
     >
@@ -79,7 +95,7 @@ const App = () => {
 
   return (
     <div>
-      <div className="status">{status}</div>
+      <div className="status">{renderStatus}</div>
       <div className="board">
         {Array(3)
           .fill(null)
@@ -96,7 +112,9 @@ const App = () => {
         <div>O wins: {wins.O}</div>
       </div>
       <div className="button-container">
-        <button onClick={handleReset} disabled={!status.includes('Winner') && !status.includes('Draw')}>Reset Game</button>
+        <button onClick={handleReset} disabled={!winner && !isDraw}>
+          Reset Game
+        </button>
         <button onClick={handleResetWins}>Reset Wins</button>
       </div>
     </div>

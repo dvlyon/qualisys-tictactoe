@@ -1,11 +1,10 @@
-/* src/renderer/App.css */
 body {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   margin: 0;
-  background: linear-gradient(to right, #00c6ff, #0072ff);
+  background: linear-gradient(to right, #3a7d44, #154734);
   font-family: Arial, sans-serif;
 }
 
@@ -36,7 +35,10 @@ body {
   background: #f0f0f0;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    background 0.3s,
+    box-shadow 0.3s;
 }
 
 .square:hover:not(:disabled) {
@@ -54,7 +56,8 @@ body {
   animation: pop-in 0.3s ease;
 }
 
-.square.disabled, .square.disabled:hover {
+.square.disabled,
+.square.disabled:hover {
   pointer-events: none;
   background: #d0d0d0;
   transform: none;
@@ -87,7 +90,8 @@ body {
   }
 }
 
-.status, .wins {
+.status,
+.wins {
   margin-top: 20px;
   font-size: 18px;
   color: #ffffff;
@@ -103,7 +107,9 @@ button {
   border: none;
   border-radius: 5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: background 0.3s, transform 0.3s;
+  transition:
+    background 0.3s,
+    transform 0.3s;
 }
 
 button:disabled {
